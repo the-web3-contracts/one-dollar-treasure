@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import { OneDollarTreasure } from "../src/Counter.sol";
+import "../src/contracts/OneDollarTreasure.sol";
 
 contract OneDollarTreasureTest is Test {
 
