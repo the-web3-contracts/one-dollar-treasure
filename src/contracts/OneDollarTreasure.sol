@@ -9,30 +9,27 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./OneDollarTreasureStorage.sol";
-
+import "forge-std/console.sol";
 
 contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, OneDollarTreasureStorage {
     address public constant TheWeb3TreasureAddress = address(0xe3b4ECd2EC88026F84cF17fef8bABfD9184C94F0);
 
     using SafeERC20 for IERC20;
 
-    constructor(){
-        _disableInitializers();
-    }
-
     function initialize() public initializer {
         roundNumber = 1;
         roundAmount = 0;
     }
 
-    function betting(IERC20 tokenAddress, uint256 amount) external {
-        if (IERC20(tokenAddress).balanceOf(msg.sender) < amount) {
+    function betting(IERC20 tokenAddress, address better, uint256 amount) external {
+        if (IERC20(tokenAddress).balanceOf(better) < amount) {
             revert NotEnoughToken(address(tokenAddress));
         }
-        if (amount <= 10e7) {
+        if (amount <= 10) {
             revert NotRightAmountToken(address(tokenAddress));
         }
-        tokenAddress.safeTransferFrom(msg.sender, address(this), amount);
+        console.log("OneDollar", address(this));
+        tokenAddress.safeTransferFrom(better, address(this), amount);
         if (roundBetting[roundNumber].totalAmount <= 0) {
             RoundBettingInfo memory rBInfo = RoundBettingInfo({
                 totalAmount: amount,
@@ -42,21 +39,21 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         } else {
             roundBetting[roundNumber].totalAmount += amount;
         }
-        bettingMembers[roundNumber].push(msg.sender);
+        bettingMembers[roundNumber].push(better);
         emit BettingInfo(
-            msg.sender,
+            better,
             amount
         );
     }
 
-    function lotteryAndGenerateNewRound(IERC20 tokenAddress, uint256 roundNumber) external {
+    function lotteryAndGenerateNewRound(IERC20 tokenAddress, uint256 roundSeed) external {
         address[] memory addressList = bettingMembers[roundNumber];
 
-        address rewardAddress = addressList[roundNumber];
+        address rewardAddress = addressList[roundSeed];
         uint256 rewardAmount = (roundBetting[roundNumber].totalAmount * 90) / 100;
         uint256 middleFee =  roundBetting[roundNumber].totalAmount - rewardAmount;
 
-        if (roundNumber > addressList.length) {
+        if (roundSeed > addressList.length) {
             revert RoundNumberIsBig();
         }
 
@@ -74,4 +71,7 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         roundNumber++;
     }
 
+    function getBettingRound(uint256 roundNumber) external returns (RoundBettingInfo memory) {
+        return roundBetting[roundNumber];
+    }
 }
