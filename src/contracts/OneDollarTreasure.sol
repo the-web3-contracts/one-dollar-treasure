@@ -16,19 +16,26 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
 
     using SafeERC20 for IERC20;
 
-    function initialize() public initializer {
+    uint32 public periodTime;
+
+    IERC20 public tokenAddress;
+
+    function initialize(IERC20 _tokenAddress) public initializer {
         roundNumber = 1;
         roundAmount = 0;
+        periodTime = 21 days;
+        roundEndTime[roundNumber] = block.timestamp + periodTime;
+        tokenAddress = _tokenAddress;
     }
 
-    function betting(IERC20 tokenAddress, address better, uint256 amount) external {
+    function betting(address better, uint256 amount) external {
         if (IERC20(tokenAddress).balanceOf(better) < amount) {
             revert NotEnoughToken(address(tokenAddress));
         }
-        if (amount <= 10) {
+        if (amount < 10 ** 6) {
             revert NotRightAmountToken(address(tokenAddress));
         }
-        console.log("OneDollar", address(this));
+
         tokenAddress.safeTransferFrom(better, address(this), amount);
         if (roundBetting[roundNumber].totalAmount <= 0) {
             RoundBettingInfo memory rBInfo = RoundBettingInfo({
@@ -46,11 +53,14 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         );
     }
 
-    function lotteryAndGenerateNewRound(IERC20 tokenAddress, uint256 roundSeed) external {
+    function lotteryAndGenerateNewRound(uint256 roundSeed) external {
+        if (block.timestamp < roundEndTime[roundNumber]) {
+            revert ThisPeriodNoExpiration();
+        }
         address[] memory addressList = bettingMembers[roundNumber];
 
         address rewardAddress = addressList[roundSeed];
-        uint256 rewardAmount = (roundBetting[roundNumber].totalAmount * 90) / 100;
+        uint256 rewardAmount = (roundBetting[roundNumber].totalAmount * 95) / 100;
         uint256 middleFee =  roundBetting[roundNumber].totalAmount - rewardAmount;
 
         if (roundSeed > addressList.length) {
@@ -69,9 +79,11 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         );
 
         roundNumber++;
+
+        roundEndTime[roundNumber] = block.timestamp + periodTime;
     }
 
-    function getBettingRound(uint256 roundNumber) external returns (RoundBettingInfo memory) {
+    function getBettingRound(uint256 roundNumber) view external returns  (RoundBettingInfo memory) {
         return roundBetting[roundNumber];
     }
 }

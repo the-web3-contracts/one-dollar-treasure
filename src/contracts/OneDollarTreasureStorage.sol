@@ -12,6 +12,7 @@ abstract contract OneDollarTreasureStorage {
 
     mapping(uint256 => RoundBettingInfo) public roundBetting;
     mapping(uint256 => address[]) public bettingMembers;
+    mapping(uint256 => uint256) public  roundEndTime;
 
 
     event BettingInfo(
@@ -29,4 +30,5 @@ abstract contract OneDollarTreasureStorage {
     error NotEnoughToken(address ERC20Address);
     error NotRightAmountToken(address ERC20Address);
     error RoundNumberIsBig();
+    error ThisPeriodNoExpiration();
 }
