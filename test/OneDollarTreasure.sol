@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
 import "forge-std/Script.sol";
-import "../src/contracts/OneDollarTreasure.sol";
+import "../src/OneDollarTreasure.sol";
 import "../src/access/proxy/Proxy.sol";
 
 import "./DappLinkToken.sol";
