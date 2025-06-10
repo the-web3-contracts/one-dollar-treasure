@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "./OneDollarTreasureStorage.sol";
 import "forge-std/console.sol";
 
-contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, OneDollarTreasureStorage {
+import "./OneDollarTreasureStorage.sol";
+import "./interfaces/IOneDollarTreasure.sol";
+
+
+contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, ReentrancyGuardUpgradeable, IOneDollarTreasure, OneDollarTreasureStorage {
     address public constant TheWeb3TreasureAddress = address(0xe3b4ECd2EC88026F84cF17fef8bABfD9184C94F0);
 
     using SafeERC20 for IERC20;
@@ -28,7 +31,7 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         tokenAddress = _tokenAddress;
     }
 
-    function betting(address better, uint256 amount) external {
+    function betting(address better, uint256 amount) external nonReentrant {
         if (IERC20(tokenAddress).balanceOf(better) < amount) {
             revert NotEnoughToken(address(tokenAddress));
         }
@@ -36,7 +39,6 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
             revert NotRightAmountToken(address(tokenAddress));
         }
 
-        tokenAddress.safeTransferFrom(better, address(this), amount);
         if (roundBetting[roundNumber].totalAmount <= 0) {
             RoundBettingInfo memory rBInfo = RoundBettingInfo({
                 totalAmount: amount,
@@ -46,14 +48,18 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         } else {
             roundBetting[roundNumber].totalAmount += amount;
         }
+
         bettingMembers[roundNumber].push(better);
+
+        tokenAddress.safeTransferFrom(better, address(this), amount);
+
         emit BettingInfo(
             better,
             amount
         );
     }
 
-    function lotteryAndGenerateNewRound(uint256 roundSeed) external {
+    function lotteryAndGenerateNewRound(uint256 roundSeed) external nonReentrant {
         if (block.timestamp < roundEndTime[roundNumber]) {
             revert ThisPeriodNoExpiration();
         }
@@ -83,7 +89,7 @@ contract OneDollarTreasure is  Initializable, AccessControlUpgradeable, Reentran
         roundEndTime[roundNumber] = block.timestamp + periodTime;
     }
 
-    function getBettingRound(uint256 roundNumber) view external returns  (RoundBettingInfo memory) {
+    function getBettingRound(uint256 roundNumber) view external returns (RoundBettingInfo memory) {
         return roundBetting[roundNumber];
     }
 }
