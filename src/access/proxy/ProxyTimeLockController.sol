@@ -4,17 +4,8 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/governance/TimelockController.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-/**
- * @title PoolManager
- * @dev PoolManager is a contract for managing the bridge
- */
+
 contract ProxyTimeLockController is TimelockController {
-    /**
-     * @dev constructor
-     * @param minDelay The minimum delay for timelock controller
-     * @param proposers The proposers for timelock controller
-     * @param executors The executors for timelock controller
-     */
     constructor(
         uint256 minDelay,
         address[] memory proposers,
