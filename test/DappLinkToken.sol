@@ -22,8 +22,8 @@ contract DappLinkToken is Initializable, ERC20Upgradeable, OwnableUpgradeable, E
     }
 
     function _authorizeUpgrade(address newImplementation)
-        internal
-        onlyOwner
-        override
+    internal
+    onlyOwner
+    override
     {}
 }
